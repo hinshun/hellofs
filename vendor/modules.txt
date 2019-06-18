@@ -1,0 +1,8 @@
+# github.com/hanwen/go-fuse v1.0.1-0.20190503102111-509d146ffec4
+github.com/hanwen/go-fuse/fs
+github.com/hanwen/go-fuse/fuse
+github.com/hanwen/go-fuse/internal
+github.com/hanwen/go-fuse/internal/utimens
+github.com/hanwen/go-fuse/splice
+# golang.org/x/sys v0.0.0-20190618155005-516e3c20635f
+golang.org/x/sys/unix
