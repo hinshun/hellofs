@@ -126,3 +126,13 @@ So the FUSE workflow is:
 4. FUSE starts listening on `control FD`.
 5. I/O performed on file in `mountpoint` is handled by FUSE VFS in kernel, which sends a request to FUSE server via `control FD`.
 6. FUSE server responds via `control FD`, to complete the I/O.
+
+## Additional reading
+
+- http://man7.org/linux/man-pages/man8/mount.fuse.8.html
+- https://stackoverflow.com/questions/1554178/how-to-register-fuse-filesystem-type-with-mount8-and-fstab
+- https://stackoverflow.com/questions/6469557/mounting-fuse-gives-invalid-argument-error-in-python
+- https://unix.stackexchange.com/questions/118090/mounting-mmcblk0p1-failed-with-invalid-argument
+- https://engineering.facile.it/blog/eng/write-filesystem-fuse/
+- https://github.com/GoogleCloudPlatform/gcsfuse/blob/master/docs/mounting.md#mount8-and-fstab-compatibility
+- https://github.com/GoogleCloudPlatform/gcsfuse/blob/master/tools/mount_gcsfuse/main.go
