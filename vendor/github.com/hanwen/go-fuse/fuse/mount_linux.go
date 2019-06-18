@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
-	"strings"
 	"syscall"
 	"unsafe"
+
+	cmount "github.com/containerd/containerd/mount"
 )
 
 func unixgramSocketpair() (l, r *os.File, err error) {
@@ -29,51 +31,40 @@ func unixgramSocketpair() (l, r *os.File, err error) {
 // Create a FUSE FS on the specified mount point.  The returned
 // mount point is always absolute.
 func mount(mountPoint string, opts *MountOptions, ready chan<- error) (fd int, err error) {
-	local, remote, err := unixgramSocketpair()
-	if err != nil {
-		return
-	}
-
-	defer local.Close()
-	defer remote.Close()
-
-	bin, err := fusermountBinary()
+	user, err := user.Current()
 	if err != nil {
 		return 0, err
 	}
 
-	cmd := []string{bin, mountPoint}
-	if s := opts.optionsStrings(); len(s) > 0 {
-		cmd = append(cmd, "-o", strings.Join(s, ","))
-	}
-	proc, err := os.StartProcess(bin,
-		cmd,
-		&os.ProcAttr{
-			Env:   []string{"_FUSE_COMMFD=3"},
-			Files: []*os.File{os.Stdin, os.Stdout, os.Stderr, remote}})
-
+	f, err := os.OpenFile("/dev/fuse", os.O_RDWR, 0666)
 	if err != nil {
-		return
+		return 0, err
+	}
+	fd = int(f.Fd())
+
+	m := cmount.Mount{
+		Type:   fmt.Sprintf("fuse.%s", opts.Name),
+		Source: opts.FsName,
+		Options: []string{
+			"nosuid",
+			"nodev",
+			fmt.Sprintf("fd=%d", fd),
+			fmt.Sprintf("rootmode=%#o", syscall.S_IFDIR),
+			fmt.Sprintf("user_id=%s", user.Uid),
+			fmt.Sprintf("group_id=%s", user.Gid),
+		},
 	}
 
-	w, err := proc.Wait()
+	if opts.AllowOther {
+		m.Options = append(m.Options, "allow_other")
+	}
+
+	m.Options = append(m.Options, opts.Options...)
+
+	err = m.Mount(mountPoint)
 	if err != nil {
-		return
+		return 0, err
 	}
-	if !w.Success() {
-		err = fmt.Errorf("fusermount exited with code %v\n", w.Sys())
-		return
-	}
-
-	fd, err = getConnection(local)
-	if err != nil {
-		return -1, err
-	}
-
-	// golang sets CLOEXEC on file descriptors when they are
-	// acquired through normal operations (e.g. open).
-	// Buf for fd, we have to set CLOEXEC manually
-	syscall.CloseOnExec(fd)
 
 	close(ready)
 	return fd, err

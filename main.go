@@ -55,7 +55,11 @@ func run(mountpoint string) error {
 	signal.Notify(c, os.Interrupt)
 
 	log.Printf("Mounting hellofs on %q", mountpoint)
-	opts := &fs.Options{}
+	opts := &fs.Options{
+		MountOptions: fuse.MountOptions{
+			AllowOther: true,
+		},
+	}
 	server, err := fs.Mount(mountpoint, &HelloRoot{}, opts)
 	if err != nil {
 		return err
