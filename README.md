@@ -3,6 +3,36 @@ hellofs
 
 Demonstrating mounting a FUSE filesystem using `github.com/containerd/containerd/mount` instead of `fusermount`.
 
+# Usage
+
+```sh
+$ make
+2019/06/18 15:45:29 Mounting hellofs on "./mnt"
+
+$ cd ./mnt
+$ ls -lah
+total 0
+-rw-r--r-- 0 root root 5 Dec 31  1969 hello
+
+$ cat hello
+hello
+```
+
+`Ctrl-C` out of `make` will trigger the unmount. If you were using `./mnt` when unmounting, you may get this message:
+```sh
+^C2019/06/18 15:47:31 Unmounting "./mnt"
+panic: /bin/fusermount: failed to unmount /home/edgarl/go/src/github.com/hinshun/hellofs/mnt: Device or resource busy
+ (code exit status 1)
+
+// ...
+
+$ ls
+ls: cannot access 'mnt': Transport endpoint is not connected
+mnt  vendor  go.mod  go.sum  hellofs  LICENSE  main.go  Makefile  README.md
+```
+
+You can cleanup the mount by ensuring no processes are still using `./mnt` and then run `make umount`:
+
 # hanwen/go-fuse changes
 
 https://github.com/hinshun/hellofs/blob/master/vendor/github.com/hanwen/go-fuse/fuse/mount_linux.go#L31-L71
